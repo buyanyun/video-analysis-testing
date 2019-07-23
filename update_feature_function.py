@@ -87,23 +87,35 @@ def extract_velocity(part_num, video_data, start_t, end_t):
 			V.append(velocity)
 
 
-
-			# if np.sum(curr_D[i:i+5] == 0) != 0:
-			# 	velocity = 0
-			# else:
-			# 	fn2h = curr_D[i]
-			# 	fnh = curr_D[i+1]
-			# 	fh = curr_D[i+2]
-			# 	f2h = curr_D[i+3]
-
-			# 	velocity_v = (- f2h + 8*fh - 8*fnh + fn2h) / 12
-			# 	velocity = (velocity_v[0]**2 + velocity_v[1]**2)**(1/2)
-
-			# V.append(velocity)
-
 		# butterworth filter:
 		sos = signal.butter(5, 1, 'low',fs=30, output='sos')
 		V = signal.sosfilt(sos, V)
+
+
+		return V
+
+def extract_velocity2(part_num, video_data, start_t, end_t):
+		V = []
+		curr_D = video_data[:,part_num]
+
+		start_f = int(start_t * 1800)
+		end_f = int(end_t * 1800)
+
+		# calculate the movement of part in each frame: 5 point stencil
+		for i in range(start_f, end_f):
+
+			if np.sum(curr_D[i:i+5] == 0) != 0:
+				velocity = 0
+			else:
+				fn2h = curr_D[i]
+				fnh = curr_D[i+1]
+				fh = curr_D[i+2]
+				f2h = curr_D[i+3]
+
+				velocity_v = (- f2h + 8*fh - 8*fnh + fn2h) / 12
+				velocity = (velocity_v[0]**2 + velocity_v[1]**2)**(1/2)
+
+			V.append(velocity)
 
 
 		return V
@@ -208,6 +220,44 @@ def num_movement_velocity(part_num, video_data, start, end, noisy_t, time_t):
 
 	return count, times, s_times, V
 
+def num_movement_velocity2(part_num, video_data, start, end, noisy_t, time_t):
+	V = extract_velocity2(part_num, video_data, start, end)
+
+	if part_num != 1 or part_num != 8:
+		if part_num < 8 or (part_num > 14 and part_num < 19):
+			I = extract_velocity2(1, video_data, start, end)
+			V = abs(np.subtract(V,I))
+		else:
+			I = extract_velocity2(8, video_data, start, end)
+			V = abs(np.subtract(V,I))
+
+	count = 0
+	times = []
+	s_times = []
+	duration = int(end*1800 - start*1800)
+	i = 0
+
+	while (i < duration):
+		if V[i] > noisy_t:
+
+			# add count if this frame is the last frame of the movement
+			s_times.append(time.strftime("%M:%S", time.gmtime((start*1800 + i) / 30)))
+
+			movement_time = 0
+			for j in range(i, duration):
+				movement_time = movement_time + 1
+				if np.sum(np.array(V[j:j+time_t]) > noisy_t) == 0:
+					break
+			
+			count = count + 1
+			i = i + movement_time
+			times.append(movement_time)
+
+		else:
+			i = i + 1
+
+	return count, times, s_times, V
+
 
 
 
@@ -224,6 +274,7 @@ def extract_json_file(video_name, SCIT_start, SCIT_end, threshold_v, threshold_m
 				# "RBigToe", "RSmallToe", "RHeel"]
 
 	X_v = []
+	X_v2 = []
 	X_m = []
 
 	for j in range(1, threshold_v):
@@ -232,6 +283,15 @@ def extract_json_file(video_name, SCIT_start, SCIT_end, threshold_v, threshold_m
 		for i in range(len(part_names)):
 			V = num_movement_velocity(i, video_data, SCIT_start, SCIT_end, j/16, time_t)
 			X_v.append(V[0:3])
+			print(V[0])
+			# draw_figure(part_names[i], video_name, 'num_movement_velocity', V[3])
+
+	for j in range(1, threshold_v):
+		print(video_name + "Number of movement based on velocity2(threshold_v = ", j / 16, "):")
+
+		for i in range(len(part_names)):
+			V = num_movement_velocity2(i, video_data, SCIT_start, SCIT_end, j/16, time_t)
+			X_v2.append(V[0:3])
 			print(V[0])
 			# draw_figure(part_names[i], video_name, 'num_movement_velocity', V[3])
 
@@ -244,6 +304,6 @@ def extract_json_file(video_name, SCIT_start, SCIT_end, threshold_v, threshold_m
 			print(V[0])
 			# draw_figure(part_names[i], video_name, 'num_movement_vector_length', V[3])
 
-	return X_v, X_m
+	return X_v, X_v2, X_m
 
 
