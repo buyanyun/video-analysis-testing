@@ -133,7 +133,7 @@ def extract_max_vector_length(part_num, video_data, threshold, start_t, end_t):
 				D.append(0)
 			else:
 				T = []
-				for j in range(threshold):
+				for j in range(30):
 					if i+j < len(curr_D):
 						if curr_D[i+j][0] == 0 or curr_D[i+j][1] == 0:
 							T.append(0)
@@ -267,11 +267,11 @@ def num_movement_velocity2(part_num, video_data, start, end, noisy_t, time_t):
 def extract_json_file(video_name, SCIT_start, SCIT_end, threshold_v, threshold_m, time_t):
 	video_data = open_SCIT_json(video_name)
 
-	part_names = ["Nose",  "Neck"]
-				# ,  "RShoulder",  "RElbow",  "RWrist",  "LShoulder",  \
-				# "LElbow",  "LWrist",  "MidHip",  "RHip", "RKnee", "RAnkle", "LHip", "LKnee", \
-				# "LAnkle", "REye", "LEye", "REar", "LEar", "LBigToe", "LSmallToe", "LHeel", \
-				# "RBigToe", "RSmallToe", "RHeel"]
+	# part_names = ["Nose",  "Neck"]
+	# 			# ,  "RShoulder",  "RElbow",  "RWrist",  "LShoulder",  \
+	# 			# "LElbow",  "LWrist",  "MidHip",  "RHip", "RKnee", "RAnkle", "LHip", "LKnee", \
+	# 			# "LAnkle", "REye", "LEye", "REar", "LEar", "LBigToe", "LSmallToe", "LHeel", \
+	# 			# "RBigToe", "RSmallToe", "RHeel"]
 
 	X_v = []
 	X_v2 = []
@@ -280,17 +280,17 @@ def extract_json_file(video_name, SCIT_start, SCIT_end, threshold_v, threshold_m
 	for j in range(1, threshold_v):
 		print(video_name + "Number of movement based on velocity(threshold_v = ", j / 16, "):")
 
-		for i in range(len(part_names)):
+		for i in [3,6]:
 			V = num_movement_velocity(i, video_data, SCIT_start, SCIT_end, j/16, time_t)
 			X_v.append(V[0:3])
 			print(V[0])
 			# draw_figure(part_names[i], video_name, 'num_movement_velocity', V[3])
 
 	for j in range(1, threshold_v):
-		print(video_name + "Number of movement based on velocity2(threshold_v = ", j / 16, "):")
+		print(video_name + "Number of movement based on velocity2(threshold_v = ", j / 8, "):")
 
-		for i in range(len(part_names)):
-			V = num_movement_velocity2(i, video_data, SCIT_start, SCIT_end, j/16, time_t)
+		for i in [3,6]:
+			V = num_movement_velocity2(i, video_data, SCIT_start, SCIT_end, j/8, time_t)
 			X_v2.append(V[0:3])
 			print(V[0])
 			# draw_figure(part_names[i], video_name, 'num_movement_velocity', V[3])
@@ -298,7 +298,7 @@ def extract_json_file(video_name, SCIT_start, SCIT_end, threshold_v, threshold_m
 	for j in range(1, threshold_m):
 		print(video_name + "Number of movement based on magnitude(threshold_m = ", j, "):")
 
-		for i in range(len(part_names)):
+		for i in [3,6]:
 			V = num_movement_vector_length(i, video_data, SCIT_start, SCIT_end, j, time_t)
 			X_m.append(V[0:3])
 			print(V[0])
