@@ -71,78 +71,133 @@ def draw_figure(part_name, video_name, function_name, V):
 	plt.clf()
 
 def extract_velocity(part_num, video_data, start_t, end_t):
-		V = []
-		curr_D = video_data[:,part_num]
+	V = []
+	curr_D = video_data[:,part_num]
 
-		start_f = int(start_t * 1800)
-		end_f = int(end_t * 1800)
+	start_f = int(start_t * 1800)
+	end_f = int(end_t * 1800)
 
-		# calculate the movement of part in each frame: 5 point stencil
-		for i in range(start_f, end_f):
+	# calculate the movement of part in each frame: 5 point stencil
+	for i in range(start_f, end_f):
 
-			if curr_D[i+1][0] == 0 or curr_D[i][0] == 0 or curr_D[i+1][1] == 0 or curr_D[i][1] == 0:
-				velocity = 0
-			else:
-				velocity = ((curr_D[i+1][0] - curr_D[i][0])**2 + (curr_D[i+1][1] - curr_D[i][1])**2)**(1/2)
-			V.append(velocity)
-
-
-		# butterworth filter:
-		sos = signal.butter(5, 1, 'low',fs=30, output='sos')
-		V = signal.sosfilt(sos, V)
+		if curr_D[i+1][0] == 0 or curr_D[i][0] == 0 or curr_D[i+1][1] == 0 or curr_D[i][1] == 0:
+			velocity = 0
+		else:
+			velocity = ((curr_D[i+1][0] - curr_D[i][0])**2 + (curr_D[i+1][1] - curr_D[i][1])**2)**(1/2)
+		V.append(velocity)
 
 
-		return V
+	# butterworth filter:
+	sos = signal.butter(5, 1, 'low',fs=30, output='sos')
+	V = signal.sosfilt(sos, V)
+
+
+	return V
 
 def extract_velocity2(part_num, video_data, start_t, end_t):
-		V = []
-		curr_D = video_data[:,part_num]
+	V = []
+	curr_D = video_data[:,part_num]
 
-		start_f = int(start_t * 1800)
-		end_f = int(end_t * 1800)
+	start_f = int(start_t * 1800)
+	end_f = int(end_t * 1800)
 
-		# calculate the movement of part in each frame: 5 point stencil
-		for i in range(start_f, end_f):
+	# calculate the movement of part in each frame: 5 point stencil
+	for i in range(start_f, end_f):
 
-			if np.sum(curr_D[i:i+5] == 0) != 0:
-				velocity = 0
-			else:
-				fn2h = curr_D[i]
-				fnh = curr_D[i+1]
-				fh = curr_D[i+2]
-				f2h = curr_D[i+3]
+		if np.sum(curr_D[i:i+5] == 0) != 0:
+			velocity = 0
+		else:
+			fn2h = curr_D[i]
+			fnh = curr_D[i+1]
+			fh = curr_D[i+2]
+			f2h = curr_D[i+3]
 
-				velocity_v = (- f2h + 8*fh - 8*fnh + fn2h) / 12
-				velocity = (velocity_v[0]**2 + velocity_v[1]**2)**(1/2)
+			velocity_v = (- f2h + 8*fh - 8*fnh + fn2h) / 12
+			velocity = (velocity_v[0]**2 + velocity_v[1]**2)**(1/2)
 
-			V.append(velocity)
+		V.append(velocity)
 
 
-		return V
+	return V
 
 def extract_max_vector_length(part_num, video_data, threshold, start_t, end_t):
-		D = []
-		curr_D = video_data[:,part_num]
+	D = []
+	curr_D = video_data[:,part_num]
 
-		start_f = int(start_t * 1800)
-		end_f = int(end_t * 1800)
+	start_f = int(start_t * 1800)
+	end_f = int(end_t * 1800)
 
-		#calculate the movement of part in each frame
-		for i in range(start_f, end_f):
-			if curr_D[i][0] == 0 or curr_D[i][1] == 0:
-				D.append(0)
-			else:
-				T = []
-				for j in range(30):
-					if i+j < len(curr_D):
-						if curr_D[i+j][0] == 0 or curr_D[i+j][1] == 0:
-							T.append(0)
-						else:
-							velocity = ((curr_D[i+j][0] - curr_D[i][0])**2 + (curr_D[i+j][1] - curr_D[i][1])**2)**(1/2)
-							T.append(velocity)
-				D.append(np.max(T))
+	#calculate the movement of part in each frame
+	for i in range(start_f, end_f):
+		if curr_D[i][0] == 0 or curr_D[i][1] == 0:
+			D.append(0)
+		else:
+			T = []
+			for j in range(30):
+				if i+j < len(curr_D):
+					if curr_D[i+j][0] == 0 or curr_D[i+j][1] == 0:
+						T.append(0)
+					else:
+						velocity = ((curr_D[i+j][0] - curr_D[i][0])**2 + (curr_D[i+j][1] - curr_D[i][1])**2)**(1/2)
+						T.append(velocity)
+			D.append(np.max(T))
 
-		return D
+	return D
+
+# def extract_gradients(part_num, video_data, start_t, end_t):
+# 	D = []
+# 	curr_D = video_data[:,part_num]
+
+# 	start_f = int(start_t * 1800)
+# 	end_f = int(end_t * 1800)
+
+# 	duration = end_f - start_f
+# 	for i in range(int(duration / 30)):
+# 		idx = start_f + 30*i
+# 		g_set = []
+# 		for j in range(30):
+# 			gradient = [curr_D[idx+j][0] - curr_D[idx][0], curr_D[idx+j][1] - curr_D[idx][1]]
+# 			g_set.append(gradient)
+
+# 	return D
+
+# def get_direction_gradient()
+
+# def num_movement_gradient(part_num, video_data, start, end, noisy_t):
+# 	G = extract_gradients(part_num, video_data, start, end)
+# 	if part_num != 1 or part_num != 8:
+# 		if part_num < 8 or (part_num > 14 and part_num < 19):
+# 			I = extract_gradients(1, video_data, time_t, start, end)
+# 			V = abs(np.subtract(G,I))
+# 		else:
+# 			I = extract_gradients(8, video_data, time_t, start, end)
+# 			V = abs(np.subtract(G,I))
+
+# 	times = []
+# 	s_times = []
+# 	duration = int(int(end*1800 - start*1800) /30)
+
+# 	i = 0
+# 	for i in range(duration):
+# 		currG = G[i]
+# 		maxG = 0
+# 		for j in range(30):
+# 			curr_comp = (currG[j][0]**2 + currG[j][1]**2)**(1/2)
+# 			if maxG < curr_comp:
+# 				maxG = curr_comp
+# 		if maxG > noisy_t:
+# 			s_times.append(start_f + i*30)
+
+# 	count = 0
+# 	curr_duration = 30
+# 	for i in range(len(s_times)):
+# 		if s_times[i+1] - s_times[i] > 30:
+# 			count++
+# 			times.append(curr_duration)
+# 		else:
+# 			curr_duration = curr_duration + 30
+
+# 	return count, times, s_times, G
 
 def num_movement_vector_length(part_num, video_data, start, end, noisy_t, time_t):
 	V = extract_max_vector_length(part_num, video_data, time_t, start, end)
@@ -260,10 +315,6 @@ def num_movement_velocity2(part_num, video_data, start, end, noisy_t, time_t):
 
 
 
-
-
-
-
 def extract_json_file(video_name, SCIT_start, SCIT_end, threshold_v, threshold_m, time_t):
 	video_data = open_SCIT_json(video_name)
 
@@ -280,7 +331,7 @@ def extract_json_file(video_name, SCIT_start, SCIT_end, threshold_v, threshold_m
 	for j in range(1, threshold_v):
 		print(video_name + "Number of movement based on velocity(threshold_v = ", j / 16, "):")
 
-		for i in [3,6]:
+		for i in [0]:
 			V = num_movement_velocity(i, video_data, SCIT_start, SCIT_end, j/16, time_t)
 			X_v.append(V[0:3])
 			print(V[0])
@@ -289,7 +340,7 @@ def extract_json_file(video_name, SCIT_start, SCIT_end, threshold_v, threshold_m
 	for j in range(1, threshold_v):
 		print(video_name + "Number of movement based on velocity2(threshold_v = ", j / 8, "):")
 
-		for i in [3,6]:
+		for i in [0]:
 			V = num_movement_velocity2(i, video_data, SCIT_start, SCIT_end, j/8, time_t)
 			X_v2.append(V[0:3])
 			print(V[0])
@@ -298,7 +349,7 @@ def extract_json_file(video_name, SCIT_start, SCIT_end, threshold_v, threshold_m
 	for j in range(1, threshold_m):
 		print(video_name + "Number of movement based on magnitude(threshold_m = ", j, "):")
 
-		for i in [3,6]:
+		for i in [0]:
 			V = num_movement_vector_length(i, video_data, SCIT_start, SCIT_end, j, time_t)
 			X_m.append(V[0:3])
 			print(V[0])
