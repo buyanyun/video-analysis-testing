@@ -241,7 +241,7 @@ def num_movement_velocity2(part_num, video_data, start, end, noisy_t, time_t):
 		if V[i] > noisy_t:
 
 			# add count if this frame is the last frame of the movement
-			s_times.append(time.strftime("%M:%S", time.gmtime((start*1800 + i) / 30)))
+			s_times.append((start*1800 + i)/30)
 
 			movement_time = 0
 			for j in range(i, duration):
@@ -298,9 +298,9 @@ def extract_json_file(video_name, SCIT_start, SCIT_end, time_t): # threshold_v,t
 
 	for i in range(len(part_names)):
 		if i in [0,1,2,5,8,9,12,15,16,17,18]:
-			threshold_m = 2
+			threshold_m = 1.5
 		else:
-			threshold_m = 5
+			threshold_m = 1.5
 
 		V = num_movement_vector_length(i, video_data, SCIT_start, SCIT_end, threshold_m, time_t)
 		X_m.append(V[0:3])
