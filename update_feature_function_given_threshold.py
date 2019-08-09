@@ -6,7 +6,7 @@ from PIL import Image
 import os, os.path
 import time
 from scipy import signal
-
+from sklearn.mixture import GaussianMixture
 
 #################################################################
 ### open_SCIT_json: read all json file in video_name +'_output/' + video_name + '_json/' dir.
@@ -242,6 +242,65 @@ def num_movement_velocity2(part_num, video_data, start, end, noisy_t, time_t):
 
 			# add count if this frame is the last frame of the movement
 			s_times.append((start*1800 + i)/30)
+
+			movement_time = 0
+			for j in range(i, duration):
+				movement_time = movement_time + 1
+				if np.sum(np.array(V[j:j+time_t]) > noisy_t) == 0:
+					break
+			
+			count = count + 1
+			i = i + movement_time
+			times.append(movement_time)
+
+		else:
+			i = i + 1
+
+	return count, times, s_times, V
+
+def num_movement_velocity3(part_num, video_data, start, end, noisy_t, time_t):
+	V = extract_velocity(part_num, video_data, start, end)
+
+	if part_num != 1 and part_num != 8:
+		if part_num < 8 or (part_num > 14 and part_num < 19):
+			I = extract_velocity(1, video_data, start, end)
+			V = abs(np.subtract(V,I))
+		else:
+			I = extract_velocity(8, video_data, start, end)
+			V = abs(np.subtract(V,I))
+
+	# to histgram graph:
+	V_hist = []
+	for i in range(len(V)):
+		for j in range(int(np.abs(V[i]*10))):
+			V_hist.append(i)
+
+	models = []
+	for i in raneg (0, len(V_hist) / 4):
+		g = GaussianMixture(i)
+		g.fit(V_hist)
+		models.append(g)
+	AICs = [m.aic(X) for m in models]
+
+	model = models[np.min(AICs)]
+
+	x = np.linspace(0, len())
+
+
+
+
+
+	count = 0
+	times = []
+	s_times = []
+	duration = int(end*1800 - start*1800)
+	i = 0
+
+	while (i < duration):
+		if V[i] > noisy_t:
+
+			# add count if this frame is the last frame of the movement
+			s_times.append(time.strftime("%M:%S", time.gmtime((start*1800 + i) / 30)))
 
 			movement_time = 0
 			for j in range(i, duration):
